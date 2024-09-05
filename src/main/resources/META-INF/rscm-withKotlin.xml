@@ -1,0 +1,11 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="kotlin" implementationClass="io.blurite.rscm.language.annotator.RSCMKotlinAnnotator"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="io.blurite.rscm.language.marker.RSCMKotlinLineMarkerProvider"/>
+        <lang.foldingBuilder language="kotlin" implementationClass="io.blurite.rscm.language.RSCMFoldingBuilder"/>
+        <completion.confidence language="kotlin"
+                               implementationClass="io.blurite.rscm.language.completion.RSCMKotlinCompletionConfidence"
+                               order="first"/>
+    </extensions>
+</idea-plugin>

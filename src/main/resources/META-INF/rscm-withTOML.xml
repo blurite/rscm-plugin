@@ -1,0 +1,11 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="io.blurite.rscm.language.annotator.RSCMTomlAnnotator"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="io.blurite.rscm.language.marker.RSCMTomlLineMarkerProvider"/>
+        <lang.foldingBuilder language="TOML" implementationClass="io.blurite.rscm.language.RSCMFoldingBuilder"/>
+        <completion.confidence language="TOML"
+                               implementationClass="io.blurite.rscm.language.completion.RSCMTomlCompletionConfidence"
+                               order="first"/>
+    </extensions>
+</idea-plugin>

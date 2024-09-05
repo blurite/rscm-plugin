@@ -1,0 +1,60 @@
+<idea-plugin>
+    <id>rscm</id>
+    <name>RSCM</name>
+    <vendor email="chris@blurite.io" url="https://www.blurite.io">Blurite</vendor>
+
+    <description><![CDATA[
+        Compile time verification on config identifiers as well as auto suggestions.
+        ]]></description>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="rscm-withKotlin.xml">org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="rscm-withTOML.xml">org.toml.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <lang.documentationProvider
+            language="RuneScape Config Mapping"
+            implementationClass="io.blurite.rscm.language.quickdoc.RscmDocmentationProvider"/>
+
+        <renamePsiElementProcessor implementation="io.blurite.rscm.language.RSCMRenamePsiElementProcessor"/>
+
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlFile" implementationClass="io.blurite.rscm.language.TomlFileManipulator"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlKeySegment"
+                                 implementationClass="io.blurite.rscm.language.TomlKeySegmentManipulator"/>
+
+        <fileType name="RuneScape Config Mapping File" implementationClass="io.blurite.rscm.language.RSCMFileType"
+                  language="RuneScape Config Mapping" extensions="rscm"/>
+        <lang.parserDefinition language="RuneScape Config Mapping"
+                               implementationClass="io.blurite.rscm.language.RSCMParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="RuneScape Config Mapping"
+                                       implementationClass="io.blurite.rscm.language.RSCMSyntaxHighlighterFactory"/>
+
+        <lang.findUsagesProvider language="RuneScape Config Mapping"
+                                 implementationClass="io.blurite.rscm.language.RSCMFindUsagesProvider"/>
+        <lang.refactoringSupport language="RuneScape Config Mapping"
+                                 implementationClass="io.blurite.rscm.language.RSCMRefactoringSupportProvider"/>
+        <lang.namesValidator language="RuneScape Config Mapping"
+                             implementationClass="io.blurite.rscm.language.RSCMNamesValidator"/>
+        <lookup.charFilter implementation="io.blurite.rscm.language.completion.RSCMCompletionCharFilter"
+                           order="first"/>
+        <psi.referenceContributor implementation="io.blurite.rscm.language.RSCMReferenceContributor"/>
+
+        <!-- Java -->
+        <annotator language="JAVA" implementationClass="io.blurite.rscm.language.annotator.RSCMJavaAnnotator"/>
+
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="io.blurite.rscm.language.marker.RSCMJavaLineMarkerProvider"/>
+        <lang.foldingBuilder language="JAVA" implementationClass="io.blurite.rscm.language.RSCMFoldingBuilder"/>
+        <completion.confidence language="JAVA"
+                               implementationClass="io.blurite.rscm.language.completion.RSCMJavaCompletionConfidence"
+                               order="before javaSkipAutopopupInStrings"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>

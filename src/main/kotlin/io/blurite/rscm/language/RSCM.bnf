@@ -1,0 +1,25 @@
+{
+  parserClass="io.blurite.rscm.language.parser.RSCMParser"
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="RSCM"
+  psiImplClassSuffix="Impl"
+  psiPackage="io.blurite.rscm.language.psi"
+  psiImplPackage="io.blurite.rscm.language.psi.impl"
+
+  elementTypeHolderClass="io.blurite.rscm.language.psi.RSCMTypes"
+  elementTypeClass="io.blurite.rscm.language.psi.RSCMElementType"
+  tokenTypeClass="io.blurite.rscm.language.psi.RSCMTokenType"
+
+  psiImplUtilClass="io.blurite.rscm.language.psi.impl.RSCMPsiImplUtil"
+}
+
+rscmFile ::= item_*
+
+private item_ ::= (property|COMMENT|CRLF)
+
+property ::= (KEY? SEPARATOR VALUE?) | KEY {
+  mixin="io.blurite.rscm.language.psi.RSCMNamedElementImpl"
+  implements="io.blurite.rscm.language.psi.RSCMNamedElement"
+  methods=[getKey getValue getName setName getNameIdentifier]
+}
