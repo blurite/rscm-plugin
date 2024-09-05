@@ -10,9 +10,7 @@ class RscmDocumentationProvider : AbstractDocumentationProvider() {
     override fun generateHoverDoc(
         element: PsiElement,
         originalElement: PsiElement?,
-    ): String? {
-        return generateDoc(element, originalElement)
-    }
+    ): String? = generateDoc(element, originalElement)
 
     override fun getQuickNavigateInfo(
         element: PsiElement,

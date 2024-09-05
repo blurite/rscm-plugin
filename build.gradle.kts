@@ -32,7 +32,7 @@ sourceSets {
 
 // Intellij/Plugin configuration
 intellij {
-    version.set("2024.1")
+    version.set("2023.1")
     plugins.set(listOf("java", "Kotlin", "org.toml.lang"))
     pluginName.set("RSCM")
     updateSinceUntilBuild.set(true)

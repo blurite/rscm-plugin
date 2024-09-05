@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import io.blurite.rscm.language.psi.RSCMFile
 import io.blurite.rscm.language.psi.RSCMProperty
+import io.blurite.rscm.settings.RSCMProjectSettings
 import java.nio.file.Path
 import java.util.*
 
@@ -44,8 +45,8 @@ object RSCMUtil {
         project: Project,
         prefix: String,
     ): Boolean {
-        val projectDirectory = project.basePath
-        val mappingDirectory = "$projectDirectory/game-server/data/mappings/"
+        val settings = RSCMProjectSettings.getInstance(project)
+        val mappingDirectory = settings.mappingsPath
         return Path
             .of(mappingDirectory)
             .toFile()
@@ -58,8 +59,8 @@ object RSCMUtil {
         project: Project,
         prefix: String,
     ): Path {
-        val projectDirectory = project.basePath
-        val mappingDirectory = "$projectDirectory/game-server/data/mappings/"
+        val settings = RSCMProjectSettings.getInstance(project)
+        val mappingDirectory = settings.mappingsPath
         return Path.of(mappingDirectory, "$prefix.${RSCMFileType.INSTANCE.defaultExtension}")
     }
 }
