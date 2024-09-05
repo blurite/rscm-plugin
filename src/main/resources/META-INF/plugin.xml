@@ -17,12 +17,13 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <lang.documentationProvider
-            language="RuneScape Config Mapping"
-            implementationClass="io.blurite.rscm.language.quickdoc.RscmDocmentationProvider"/>
+                language="RuneScape Config Mapping"
+                implementationClass="io.blurite.rscm.language.quickdoc.RscmDocumentationProvider"/>
 
         <renamePsiElementProcessor implementation="io.blurite.rscm.language.RSCMRenamePsiElementProcessor"/>
 
-        <lang.elementManipulator forClass="org.toml.lang.psi.TomlFile" implementationClass="io.blurite.rscm.language.TomlFileManipulator"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlFile"
+                                 implementationClass="io.blurite.rscm.language.TomlFileManipulator"/>
         <lang.elementManipulator forClass="org.toml.lang.psi.TomlKeySegment"
                                  implementationClass="io.blurite.rscm.language.TomlKeySegmentManipulator"/>
 

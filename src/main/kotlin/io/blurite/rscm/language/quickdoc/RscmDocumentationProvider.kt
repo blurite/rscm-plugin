@@ -5,9 +5,8 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import io.blurite.rscm.language.psi.RSCMProperty
-import java.util.*
 
-class RscmDocmentationProvider : AbstractDocumentationProvider() {
+class RscmDocumentationProvider : AbstractDocumentationProvider() {
     override fun generateHoverDoc(
         element: PsiElement,
         originalElement: PsiElement?,
