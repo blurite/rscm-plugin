@@ -2,10 +2,10 @@ import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.9.23"
     java
     idea
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.intellij") version "1.17.4"
 }
 
 group = "io.blurite"
@@ -32,7 +32,7 @@ sourceSets {
 
 // Intellij/Plugin configuration
 intellij {
-    version.set("2023.1")
+    version.set("2024.1")
     plugins.set(listOf("java", "Kotlin", "org.toml.lang"))
     pluginName.set("RSCM")
     updateSinceUntilBuild.set(true)
