@@ -7,6 +7,10 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import io.blurite.rscm.language.annotator.RSCMAnnotator
+import io.blurite.rscm.language.annotator.RscmJavaAnnotationSupport
+import io.blurite.rscm.language.annotator.RscmJavaDirective
+import io.blurite.rscm.language.annotator.RscmKotlinAnnotationSupport
+import io.blurite.rscm.language.annotator.RscmKotlinDirective
 import io.blurite.rscm.language.psi.RSCMFile
 import io.blurite.rscm.language.psi.impl.RSCMPropertyImpl
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -28,6 +32,12 @@ class RSCMReferenceContributor : PsiReferenceContributor() {
                     ctx: ProcessingContext,
                 ): Array<PsiReference> {
                     val element = element as? PsiLiteralExpression ?: return PsiReference.EMPTY_ARRAY
+                    if (
+                        RscmJavaAnnotationSupport.isPartOfConcatenation(element) ||
+                        RscmJavaAnnotationSupport.directiveFor(element) == RscmJavaDirective.Ignore
+                    ) {
+                        return PsiReference.EMPTY_ARRAY
+                    }
                     val value = element.value as? String? ?: return PsiReference.EMPTY_ARRAY
                     return createReference(value, element)
                 }
@@ -41,6 +51,9 @@ class RSCMReferenceContributor : PsiReferenceContributor() {
                     ctx: ProcessingContext,
                 ): Array<PsiReference> {
                     val element = element as? KtStringTemplateExpression ?: return PsiReference.EMPTY_ARRAY
+                    if (RscmKotlinAnnotationSupport.directiveFor(element) == RscmKotlinDirective.Ignore) {
+                        return PsiReference.EMPTY_ARRAY
+                    }
                     val value = element.text?.replace("\"", "") ?: return PsiReference.EMPTY_ARRAY
                     return createReference(value, element)
                 }

@@ -1,58 +1,171 @@
-# RSCM (RuneScape Config Mapping) - IntelliJ IDEA Plugin
+# RSCM
 
-## Setup
+IntelliJ support and compile-time validation for RuneScape Config Mapping references in Kotlin, Java, and TOML.
 
-Create a directory in your project in which to store your mappings. Mapping files consist of the following format:
-```
+## Mappings
+
+The mapping filename is the reference type. For example, `mappings/item.rscm`:
+
+```properties
 abyssal_whip=4151
 abyssal_whip_note=4152
 ```
-Where `abyssal_whip` is the string representation of the id `4151`.
-The name of the mapping file corresponds to the mapping 'type', e.g. `item.rscm` corresponds to `item.abyssal_whip`.
 
-In IntelliJ settings search 'RSCM' and set the mappings directory to the folder you created.
+This defines `item.abyssal_whip` and `item.abyssal_whip_note`.
 
-Furthermore, it is possible to do child-references, such as:
+## IntelliJ plugin
+
+Requires JDK 21.
+
+### Build
+
+```shell
+./gradlew buildPlugin
 ```
-# in interface.rscm
-bank=12
 
-# in component.rscm
-bank:universe=0
+The plugin ZIP is created at:
+
+```text
+build/distributions/rscm-plugin-1.0.zip
 ```
 
-In this example, one is able to refactor `bank` reference in interface.rscm and have it echo through to
-the child reference in component.rscm. These child mappings must be defined in RSCM Settings tab, in IntelliJ Idea.
-For the above example, the declaration would be `component=interface`.
+### Install
 
-It is also possible to associate RSCM elements with files in directories. This system requires that
-all the files be in a root folder specific to that element. As an example, `data/items/*` where all the files
-are `rscm_name.toml`.
-In order to set up file references, you need to create a file called `directory.conf` in the same folder
-where all the .rscm files are.
-The file shall have `type=folder` declarations. For example, `item=items` to link any `item` reference to files in
-`items` folder.
+1. Open **Settings → Plugins**.
+2. Click the gear icon and select **Install Plugin from Disk**.
+3. Select `build/distributions/rscm-plugin-1.0.zip`.
+4. Restart IntelliJ if prompted.
+5. Search for **RSCM** in Settings and select your mappings directory.
 
-Other file extensions beyond .toml are also supported for referential renaming. These require defining the extension
-in the `directory.conf` file with the pipe operator.
-As an example, a valid declaration is `jingle=jingles|dat`.
-This means that when renaming a jingle property (e.g. `jingle.advance_agility`), it will look for a file called
-`advance_agility.dat` in the `jingles` folder, and rename it accordingly if one was found. If no suffix is defined,
-`toml` files will be searched.
+## Compiler plugin
+
+The standalone JAR contains the Gradle loader, annotations, and both compiler plugins.
+
+### Export
+
+```shell
+./gradlew buildCompilerJar
+```
+
+The JAR is created at:
+
+```text
+build/distributions/rscm-compiler-1.0.jar
+```
+
+Copy it into the consuming project, for example:
+
+```text
+consumer-project/gradle/rscm-compiler-1.0.jar
+```
+
+### Kotlin
+
+Add this to the consumer's `build.gradle.kts`:
+
+```kotlin
+import io.blurite.rscm.gradle.RscmGradleExtension
+
+buildscript {
+    dependencies {
+        classpath(files("gradle/rscm-compiler-1.0.jar"))
+    }
+}
+
+plugins {
+    kotlin("jvm") version "2.4.0"
+}
+
+apply(plugin = "io.blurite.rscm.compiler")
+
+repositories {
+    mavenCentral()
+}
+
+extensions.configure<RscmGradleExtension> {
+    mappingsDirectory.set(layout.projectDirectory.dir("mappings"))
+}
+```
+
+This bundle currently targets Kotlin 2.4.0.
+
+### Java
+
+Add this to the consumer's `build.gradle.kts`:
+
+```kotlin
+import io.blurite.rscm.gradle.RscmGradleExtension
+
+buildscript {
+    dependencies {
+        classpath(files("gradle/rscm-compiler-1.0.jar"))
+    }
+}
+
+plugins {
+    java
+}
+
+apply(plugin = "io.blurite.rscm.compiler")
+
+extensions.configure<RscmGradleExtension> {
+    mappingsDirectory.set(layout.projectDirectory.dir("mappings"))
+}
+```
+
+Java compilation requires javac from JDK 17 or newer. Direct unresolved literals fail `compileKotlin` or `compileJava`; dynamic/interpolated strings are ignored.
+
+### Optional annotations
+
+The bundled Gradle loader adds the annotations automatically.
+
+Kotlin:
+
+```kotlin
+import io.blurite.rscm.annotations.Rscm
+import io.blurite.rscm.annotations.RscmIgnore
+
+fun load(@Rscm("item") reference: String) = reference
+
+@RscmIgnore
+val externallyValidated = "item.not_in_the_mapping"
+```
+
+Java:
+
+```java
+import io.blurite.rscm.annotations.Rscm;
+import io.blurite.rscm.annotations.RscmIgnore;
+
+final class Loader {
+    static String load(@Rscm("item") String reference) {
+        return reference;
+    }
+
+    @RscmIgnore
+    String externallyValidated = "item.not_in_the_mapping";
+}
+```
+
+`@Rscm("item")` requires direct literals to use the `item` mapping. `@RscmIgnore` disables validation for that field, property, local variable, or parameter.
+
+## Advanced mappings
+
+- Child reference: configure `component=interface` in RSCM Settings so `component.bank:universe` refers to `interface.bank`.
+- File reference: add `item=items` to `directory.conf` to associate item mappings with `items/*.toml`.
+- Custom file extension: use `jingle=jingles|dat` to associate jingle mappings with `jingles/*.dat`.
 
 ## Features
 
-- Highlighting of mapped strings
-- Go to declaration of mapped strings
-- Find usages of mapped strings
-- Rename mapped strings
-  - If using TOML definitions, the plugin will rename files that match the string
-- Safe delete mapped strings
-- Code completion for mapped strings
-- Quick documentation for mapped strings
-
+- Syntax highlighting and completion
+- Go to declaration and find usages
+- Rename and safe delete
+- Quick documentation
+- Kotlin and Java compiler validation
+- TOML support
 
 ## Credits
+
 - [ushort](https://github.com/ushort) (Chris)
 - [z-kris](https://github.com/z-kris) (Kris)
 - [notmeta](https://github.com/notmeta) (Corey)
