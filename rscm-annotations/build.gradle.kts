@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.blurite"
-version = "1.0"
+version = "2026.2"
 
 repositories {
     mavenCentral()

@@ -18,9 +18,9 @@ class RSCMCompletionCharFilter : CharFilter() {
     override fun acceptChar(
         c: Char,
         prefixLength: Int,
-        lookup: Lookup?,
+        lookup: Lookup,
     ): Result? {
-        lookup?.psiFile ?: return null
+        lookup.psiFile ?: return null
         val element = lookup.psiElement?.parent ?: return null
         val project = element.project
         return when (element) {

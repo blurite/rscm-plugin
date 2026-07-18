@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.blurite"
-version = "1.0"
+version = "2026.2"
 
 repositories {
     mavenCentral()
@@ -28,6 +28,14 @@ kotlin {
     jvmToolchain(17)
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+tasks.processResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("pluginVersion", pluginVersion)
+    filesMatching("io/blurite/rscm/gradle/rscm-plugin.properties") {
+        expand("pluginVersion" to pluginVersion)
     }
 }
 
@@ -65,6 +73,7 @@ tasks.test {
         "rscm.test.repository",
         rootProject.layout.buildDirectory.dir("test-maven-repository").get().asFile.absolutePath,
     )
+    systemProperty("rscm.test.plugin.version", project.version.toString())
     systemProperty(
         "rscm.test.compiler.bundle",
         compilerBundleJar.flatMap { it.archiveFile }.get().asFile.absolutePath,

@@ -55,6 +55,6 @@ class RscmKotlinCompilerSupportPlugin : KotlinCompilerPluginSupportPlugin {
         SubpluginArtifact(
             groupId = "io.blurite",
             artifactId = "rscm-kotlin-compiler",
-            version = "1.0",
+            version = RscmGradlePlugin.DISTRIBUTION_VERSION,
         )
 }

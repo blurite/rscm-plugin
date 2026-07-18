@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import java.io.File
+import java.util.Properties
 import java.util.jar.JarFile
 
 /** Configures RSCM validation for every supported JVM language present in a project. */
@@ -72,8 +73,14 @@ class RscmGradlePlugin : Plugin<Project> {
     companion object {
         const val COMPILER_PLUGIN_ID = "io.blurite.rscm"
         const val MAPPINGS_DIRECTORY_OPTION = "mappingsDirectory"
-        const val ANNOTATIONS_COORDINATE = "io.blurite:rscm-annotations:1.0"
-        const val JAVA_COMPILER_COORDINATE = "io.blurite:rscm-java-compiler:1.0"
+        internal val DISTRIBUTION_VERSION: String =
+            checkNotNull(
+                RscmGradlePlugin::class.java.getResourceAsStream("rscm-plugin.properties"),
+            ) { "Missing RSCM Gradle plugin version resource" }.use { input ->
+                Properties().apply { load(input) }.getProperty("version")
+            }
+        val ANNOTATIONS_COORDINATE = "io.blurite:rscm-annotations:$DISTRIBUTION_VERSION"
+        val JAVA_COMPILER_COORDINATE = "io.blurite:rscm-java-compiler:$DISTRIBUTION_VERSION"
 
         internal val standaloneCompilerJar: File? by lazy {
             val location =

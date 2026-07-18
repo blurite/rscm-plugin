@@ -14,6 +14,9 @@ class RscmGradlePluginTest {
     @TempDir
     lateinit var projectDirectory: Path
 
+    private val pluginVersion: String
+        get() = checkNotNull(System.getProperty("rscm.test.plugin.version"))
+
     @Test
     fun `compileKotlin reports unresolved RSCM literals`() {
         createProject(
@@ -145,7 +148,7 @@ class RscmGradlePluginTest {
             """
             plugins {
                 kotlin("jvm") version "2.4.0"
-                id("io.blurite.rscm.compiler") version "1.0"
+                id("io.blurite.rscm.compiler") version "$pluginVersion"
             }
 
             repositories {
@@ -190,7 +193,7 @@ class RscmGradlePluginTest {
 
             plugins {
                 kotlin("jvm") version "2.4.0" apply false
-                id("io.blurite.rscm.compiler") version "1.0" apply false
+                id("io.blurite.rscm.compiler") version "$pluginVersion" apply false
             }
 
             subprojects {
@@ -248,7 +251,7 @@ class RscmGradlePluginTest {
 
             plugins {
                 kotlin("jvm") version "2.4.0" apply false
-                id("io.blurite.rscm.compiler") version "1.0" apply false
+                id("io.blurite.rscm.compiler") version "$pluginVersion" apply false
             }
 
             subprojects {

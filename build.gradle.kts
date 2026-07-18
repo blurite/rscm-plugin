@@ -10,11 +10,11 @@ plugins {
     kotlin("jvm") version "2.4.0"
     java
     idea
-    id("org.jetbrains.intellij.platform") version "2.7.1"
+    id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
 group = "io.blurite"
-version = "1.0"
+version = "2026.2"
 
 repositories {
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
@@ -42,7 +42,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     testImplementation("junit:junit:4.13.2")
     intellijPlatform {
-        intellijIdeaCommunity("2025.2")
+        intellijIdea("2026.2")
 
         bundledPlugin("org.jetbrains.kotlin")
         bundledPlugin("com.intellij.java")
@@ -79,20 +79,20 @@ sourceSets {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
 intellijPlatform {
     pluginConfiguration {
         name = "RSCM"
-        version = "2025.2.1"
+        version = project.version.toString()
         changeNotes.set("Add Java and Kotlin compiler validation annotations")
     }
 
     pluginVerification {
         ides {
-            create("IC", "2025.2")
+            current()
         }
 
         failureLevel.set(
@@ -109,7 +109,7 @@ intellijPlatform {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        jvmTarget.set(JvmTarget.JVM_25)
         languageVersion.set(KotlinVersion.KOTLIN_2_2)
     }
 }

@@ -15,7 +15,7 @@ This defines `item.abyssal_whip` and `item.abyssal_whip_note`.
 
 ## IntelliJ plugin
 
-Requires JDK 21.
+Requires JDK 25.
 
 ### Build
 
@@ -26,14 +26,14 @@ Requires JDK 21.
 The plugin ZIP is created at:
 
 ```text
-build/distributions/rscm-plugin-1.0.zip
+build/distributions/rscm-plugin-2026.2.zip
 ```
 
 ### Install
 
 1. Open **Settings → Plugins**.
 2. Click the gear icon and select **Install Plugin from Disk**.
-3. Select `build/distributions/rscm-plugin-1.0.zip`.
+3. Select `build/distributions/rscm-plugin-2026.2.zip`.
 4. Restart IntelliJ if prompted.
 5. Search for **RSCM** in Settings and select your mappings directory.
 
@@ -50,13 +50,13 @@ The standalone JAR contains the Gradle loader, annotations, and both compiler pl
 The JAR is created at:
 
 ```text
-build/distributions/rscm-compiler-1.0.jar
+build/distributions/rscm-compiler-2026.2.jar
 ```
 
 Copy it into the consuming project, for example:
 
 ```text
-consumer-project/gradle/rscm-compiler-1.0.jar
+consumer-project/gradle/rscm-compiler-2026.2.jar
 ```
 
 ### Kotlin
@@ -68,7 +68,7 @@ import io.blurite.rscm.gradle.RscmGradleExtension
 
 buildscript {
     dependencies {
-        classpath(files("gradle/rscm-compiler-1.0.jar"))
+        classpath(files("gradle/rscm-compiler-2026.2.jar"))
     }
 }
 
@@ -98,7 +98,7 @@ import io.blurite.rscm.gradle.RscmGradleExtension
 
 buildscript {
     dependencies {
-        classpath(files("gradle/rscm-compiler-1.0.jar"))
+        classpath(files("gradle/rscm-compiler-2026.2.jar"))
     }
 }
 

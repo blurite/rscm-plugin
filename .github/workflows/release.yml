@@ -1,8 +1,8 @@
-name: Build plugin
+name: Build release
 
 on:
   release:
-    types: [ created ]
+    types: [ published ]
 
 permissions:
   contents: write
@@ -15,13 +15,17 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '25'
+          distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build with Gradle
-        run: ./gradlew buildPlugin
-      - name: Upload to github release
-        run: gh release upload ${{ github.ref_name }} ./build/distributions/*
+      - name: Test and build release
+        run: ./gradlew test buildPlugin buildCompilerJar verifyPlugin :rscm-gradle-plugin:validatePlugins
+      - name: Upload release assets
+        run: >
+          gh release upload "${{ github.event.release.tag_name }}"
+          ./build/distributions/rscm-plugin-*.zip
+          ./build/distributions/rscm-compiler-*.jar
+          --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

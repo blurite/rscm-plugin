@@ -79,7 +79,7 @@ internal object RscmKotlinAnnotationSupport {
 
         val left = assignment.left as? KtElement ?: return null
         val access = left.resolveToCall()?.successfulVariableAccessCall() ?: return null
-        return access.partiallyAppliedSymbol.signature.symbol.annotations.rscmDirective()
+        return access.signature.symbol.annotations.rscmDirective()
     }
 
     private fun KaSession.callArgumentDirective(
@@ -91,7 +91,7 @@ internal object RscmKotlinAnnotationSupport {
 
         val callElement = valueArgument.getStrictParentOfType<KtCallElement>() ?: return null
         val call = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return null
+        val parameter = call.valueArgumentMapping[argumentExpression]?.symbol ?: return null
         return parameter.annotations.rscmDirective()
     }
 
