@@ -172,9 +172,13 @@ public final class RscmJavacPlugin implements Plugin {
 
     private record DiagnosticKey(String source, long position, String message) {}
 
-    private sealed interface Directive permits IgnoreDirective, RequiredTypeDirective {}
+    private sealed interface Directive permits IgnoreDirective, RejectDirective, RequiredTypeDirective {}
 
     private enum IgnoreDirective implements Directive {
+        INSTANCE
+    }
+
+    private enum RejectDirective implements Directive {
         INSTANCE
     }
 
@@ -183,6 +187,7 @@ public final class RscmJavacPlugin implements Plugin {
     private static final class RscmTreeScanner extends TreePathScanner<Void, Void> {
         private static final String RSCM_ANNOTATION = "io.blurite.rscm.annotations.Rscm";
         private static final String RSCM_IGNORE_ANNOTATION = "io.blurite.rscm.annotations.RscmIgnore";
+        private static final String NOT_RSCM_ANNOTATION = "io.blurite.rscm.annotations.NotRscm";
 
         private final Trees trees;
         private final Elements elements;
@@ -217,6 +222,10 @@ public final class RscmJavacPlugin implements Plugin {
 
             Directive usageDirective = directUsageDirective(literalPath);
             if (usageDirective == IgnoreDirective.INSTANCE) {
+                return null;
+            }
+            if (usageDirective == RejectDirective.INSTANCE) {
+                validateNotRscm(literalTree, literal);
                 return null;
             }
             if (usageDirective instanceof RequiredTypeDirective requiredType) {
@@ -321,22 +330,40 @@ public final class RscmJavacPlugin implements Plugin {
             }
 
             AnnotationMirror rscm = null;
+            boolean reject = false;
             for (AnnotationMirror annotation : element.getAnnotationMirrors()) {
                 String qualifiedName = annotationQualifiedName(annotation);
                 if (RSCM_IGNORE_ANNOTATION.equals(qualifiedName)) {
                     return IgnoreDirective.INSTANCE;
                 }
+                if (NOT_RSCM_ANNOTATION.equals(qualifiedName)) {
+                    reject = true;
+                }
                 if (RSCM_ANNOTATION.equals(qualifiedName)) {
                     rscm = annotation;
                 }
+            }
+            for (AnnotationMirror annotation : element.asType().getAnnotationMirrors()) {
+                String qualifiedName = annotationQualifiedName(annotation);
+                if (RSCM_IGNORE_ANNOTATION.equals(qualifiedName)) {
+                    return IgnoreDirective.INSTANCE;
+                }
+                if (NOT_RSCM_ANNOTATION.equals(qualifiedName)) {
+                    reject = true;
+                }
+                if (RSCM_ANNOTATION.equals(qualifiedName)) {
+                    rscm = annotation;
+                }
+            }
+            if (reject) {
+                return RejectDirective.INSTANCE;
             }
             if (rscm == null) {
                 return null;
             }
 
             String value = annotationString(rscm, "value");
-            String type = annotationString(rscm, "type");
-            return new RequiredTypeDirective(value != null && !value.isEmpty() ? value : type == null ? "" : type);
+            return new RequiredTypeDirective(value == null ? "" : value);
         }
 
         private String annotationQualifiedName(AnnotationMirror annotation) {
@@ -409,6 +436,17 @@ public final class RscmJavacPlugin implements Plugin {
             RscmReference unresolved = mappingIndex.unresolvedReference(literal);
             if (unresolved != null) {
                 report(tree, "Unresolved RSCM property: " + unresolved.getLiteral());
+            }
+        }
+
+        private void validateNotRscm(Tree tree, String literal) {
+            int separator = literal.indexOf('.');
+            if (
+                separator > 0 &&
+                separator < literal.length() - 1 &&
+                mappingIndex.getPrefixes().contains(literal.substring(0, separator))
+            ) {
+                report(tree, "Expected a non-RSCM string, but found RSCM reference: " + literal);
             }
         }
 

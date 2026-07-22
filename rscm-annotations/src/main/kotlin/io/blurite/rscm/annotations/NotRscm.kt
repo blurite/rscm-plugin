@@ -1,6 +1,6 @@
 package io.blurite.rscm.annotations
 
-/** Suppresses RSCM interpretation and validation for a string declaration or type use. */
+/** Requires statically known strings to not be RSCM references. */
 @Target(
     AnnotationTarget.PROPERTY,
     AnnotationTarget.FIELD,
@@ -9,4 +9,4 @@ package io.blurite.rscm.annotations
     AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.BINARY)
-annotation class RscmIgnore
+annotation class NotRscm

@@ -33,6 +33,18 @@ class RscmStringLiteralChecker(
         val parameter = context.findClosest<FirValueParameterSymbol>()
         when (val directive = parameter?.rscmDirective(context.session)) {
             RscmDirective.Ignore -> return
+            RscmDirective.Reject -> {
+                if (parameter.hasDirectDefaultValue(expression)) {
+                    validateNotRscmLiteral(
+                        expression = expression,
+                        literal = literal,
+                        mappingIndex = mappingIndex,
+                        context = context,
+                        reporter = reporter,
+                    )
+                    return
+                }
+            }
             is RscmDirective.RequireType -> {
                 if (parameter.hasDirectDefaultValue(expression)) {
                     validateRscmLiteral(
@@ -52,6 +64,18 @@ class RscmStringLiteralChecker(
         val property = context.findClosest<FirPropertySymbol>()
         when (val directive = property?.rscmDirective(context.session)) {
             RscmDirective.Ignore -> return
+            RscmDirective.Reject -> {
+                if (property.hasDirectInitializer(expression)) {
+                    validateNotRscmLiteral(
+                        expression = expression,
+                        literal = literal,
+                        mappingIndex = mappingIndex,
+                        context = context,
+                        reporter = reporter,
+                    )
+                    return
+                }
+            }
             is RscmDirective.RequireType -> {
                 if (property.hasDirectInitializer(expression)) {
                     validateRscmLiteral(

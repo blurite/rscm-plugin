@@ -29,11 +29,10 @@ class RscmJavaAnnotatorTest : BasePlatformTestCase() {
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
 
-            @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+            @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
             @Retention(RetentionPolicy.CLASS)
             public @interface Rscm {
                 String value() default "";
-                String type() default "";
             }
             """.trimIndent(),
         )
@@ -47,9 +46,24 @@ class RscmJavaAnnotatorTest : BasePlatformTestCase() {
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
 
-            @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+            @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
             @Retention(RetentionPolicy.CLASS)
             public @interface RscmIgnore {}
+            """.trimIndent(),
+        )
+        myFixture.addFileToProject(
+            "io/blurite/rscm/annotations/NotRscm.java",
+            """
+            package io.blurite.rscm.annotations;
+
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+            import java.lang.annotation.Target;
+
+            @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+            @Retention(RetentionPolicy.CLASS)
+            public @interface NotRscm {}
             """.trimIndent(),
         )
     }
@@ -170,6 +184,28 @@ class RscmJavaAnnotatorTest : BasePlatformTestCase() {
         assertFalse(
             "Errors: $errors",
             errors.any { it.contains("RSCM", ignoreCase = true) || it == "Unresolved property" },
+        )
+    }
+
+    fun testNotRscmRejectsTypeAnnotatedMethodArguments() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.NotRscm;
+
+                class Example {
+                    static String label(@NotRscm String text) {
+                        return text;
+                    }
+
+                    String result = label("item.abyssal_whip");
+                }
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected a non-RSCM string, but found RSCM reference: item.abyssal_whip" },
         )
     }
 

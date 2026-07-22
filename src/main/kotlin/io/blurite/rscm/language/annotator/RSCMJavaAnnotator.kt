@@ -23,6 +23,22 @@ class RSCMJavaAnnotator : RSCMAnnotator() {
 
         when (val directive = RscmJavaAnnotationSupport.directiveFor(element)) {
             RscmJavaDirective.Ignore -> return
+            RscmJavaDirective.Reject -> {
+                val separator = value.indexOf(RSCM_SEPARATOR_STR)
+                val prefix = value.takeIf { separator > 0 }?.substring(0, separator)
+                if (
+                    prefix != null &&
+                    separator < value.lastIndex &&
+                    RSCMUtil.isValidPrefix(element.project, prefix)
+                ) {
+                    reportError(
+                        element,
+                        holder,
+                        "Expected a non-RSCM string, but found RSCM reference: $value",
+                    )
+                }
+                return
+            }
             is RscmJavaDirective.RequireType -> {
                 if (!RSCMUtil.isValidPrefix(element.project, directive.type)) {
                     reportError(element, holder, "Unknown RSCM type in @Rscm: ${directive.type}")

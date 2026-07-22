@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -26,6 +27,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal sealed interface RscmKotlinDirective {
     data object Ignore : RscmKotlinDirective
+    data object Reject : RscmKotlinDirective
+
 
     data class RequireType(
         val type: String,
@@ -35,8 +38,8 @@ internal sealed interface RscmKotlinDirective {
 internal object RscmKotlinAnnotationSupport {
     private val rscmClassId = ClassId.topLevel(FqName("io.blurite.rscm.annotations.Rscm"))
     private val ignoreClassId = ClassId.topLevel(FqName("io.blurite.rscm.annotations.RscmIgnore"))
+    private val notRscmClassId = ClassId.topLevel(FqName("io.blurite.rscm.annotations.NotRscm"))
     private val valueArgumentName = Name.identifier("value")
-    private val typeArgumentName = Name.identifier("type")
 
     fun directiveFor(expression: KtStringTemplateExpression): RscmKotlinDirective? {
         if (DumbService.isDumb(expression.project)) return null
@@ -58,8 +61,10 @@ internal object RscmKotlinAnnotationSupport {
         expression: KtStringTemplateExpression,
     ): RscmKotlinDirective? {
         val parameter = expression.getStrictParentOfType<KtParameter>() ?: return null
-        return when (val directive = parameter.symbol.annotations.rscmDirective()) {
+        return when (val directive = parameter.symbol.rscmDirective()) {
             RscmKotlinDirective.Ignore -> directive
+            RscmKotlinDirective.Reject ->
+                directive.takeIf { KtPsiUtil.deparenthesize(parameter.defaultValue) === expression }
             is RscmKotlinDirective.RequireType ->
                 directive.takeIf { KtPsiUtil.deparenthesize(parameter.defaultValue) === expression }
             null -> null
@@ -92,7 +97,7 @@ internal object RscmKotlinAnnotationSupport {
         val callElement = valueArgument.getStrictParentOfType<KtCallElement>() ?: return null
         val call = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val parameter = call.valueArgumentMapping[argumentExpression]?.symbol ?: return null
-        return parameter.annotations.rscmDirective()
+        return parameter.rscmDirective()
     }
 
     private fun KaSession.propertyDirective(
@@ -101,6 +106,8 @@ internal object RscmKotlinAnnotationSupport {
         val property = expression.getStrictParentOfType<KtProperty>() ?: return null
         return when (val directive = property.symbol.annotations.rscmDirective()) {
             RscmKotlinDirective.Ignore -> directive
+            RscmKotlinDirective.Reject ->
+                directive.takeIf { KtPsiUtil.deparenthesize(property.initializer) === expression }
             is RscmKotlinDirective.RequireType ->
                 directive.takeIf { KtPsiUtil.deparenthesize(property.initializer) === expression }
             null -> null
@@ -109,14 +116,17 @@ internal object RscmKotlinAnnotationSupport {
 
     private fun KaAnnotationList.rscmDirective(): RscmKotlinDirective? {
         if (contains(ignoreClassId)) return RscmKotlinDirective.Ignore
+        if (contains(notRscmClassId)) return RscmKotlinDirective.Reject
 
         val annotation = get(rscmClassId).firstOrNull() ?: return null
         val type =
             annotation.stringArgument(valueArgumentName)?.takeIf(String::isNotEmpty)
-                ?: annotation.stringArgument(typeArgumentName)
                 ?: return null
         return RscmKotlinDirective.RequireType(type)
     }
+    private fun KaVariableSymbol.rscmDirective(): RscmKotlinDirective? =
+        annotations.rscmDirective() ?: returnType.annotations.rscmDirective()
+
 
     private fun org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation.stringArgument(name: Name): String? {
         val argument = arguments.firstOrNull { it.name == name } ?: return null

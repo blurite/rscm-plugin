@@ -12,6 +12,7 @@ object RscmDiagnostics : KtDiagnosticsContainer() {
     val UNRESOLVED_PROPERTY by error1<KtElement, String>()
     val UNKNOWN_RSCM_TYPE by error1<KtElement, String>()
     val WRONG_RSCM_TYPE by error2<KtElement, String, String>()
+    val RSCM_NOT_ALLOWED by error1<KtElement, String>()
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = RscmDiagnosticRendererFactory
 }
@@ -33,6 +34,11 @@ object RscmDiagnosticRendererFactory : BaseDiagnosticRendererFactory() {
                 RscmDiagnostics.WRONG_RSCM_TYPE,
                 "Expected an RSCM reference of type ''{0}'', but found: {1}",
                 TO_STRING,
+                TO_STRING,
+            )
+            map.put(
+                RscmDiagnostics.RSCM_NOT_ALLOWED,
+                "Expected a non-RSCM string, but found RSCM reference: {0}",
                 TO_STRING,
             )
         }

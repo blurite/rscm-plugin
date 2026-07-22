@@ -24,13 +24,17 @@ class RscmKotlinAnnotatorTest : BasePlatformTestCase() {
             """
             package io.blurite.rscm.annotations
 
-            @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE)
+            @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE, AnnotationTarget.TYPE)
             @Retention(AnnotationRetention.BINARY)
-            annotation class Rscm(val type: String)
+            annotation class Rscm(val value: String)
 
-            @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE)
+            @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE, AnnotationTarget.TYPE)
             @Retention(AnnotationRetention.BINARY)
             annotation class RscmIgnore
+
+            @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.LOCAL_VARIABLE, AnnotationTarget.TYPE)
+            @Retention(AnnotationRetention.BINARY)
+            annotation class NotRscm
             """.trimIndent(),
         )
     }
@@ -159,6 +163,98 @@ class RscmKotlinAnnotatorTest : BasePlatformTestCase() {
         assertFalse(
             "Errors: $errors",
             errors.any { it.contains("RSCM", ignoreCase = true) || it == "Unresolved property" },
+        )
+    }
+
+    fun testNotRscmRejectsTypeAnnotatedMethodArguments() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                fun label(text: @NotRscm String) = text
+
+                val result = label("item.abyssal_whip")
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected a non-RSCM string, but found RSCM reference: item.abyssal_whip" },
+        )
+    }
+
+    fun testRscmConstrainsGenericCollectionElements() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                val references: List<@Rscm("item") String> = listOf("npc.hans")
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected an RSCM reference of type 'item', but found: npc.hans" },
+        )
+    }
+
+    fun testNotRscmConstrainsGenericCollectionElements() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                val labels: List<@NotRscm String> = listOf("item.abyssal_whip")
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected a non-RSCM string, but found RSCM reference: item.abyssal_whip" },
+        )
+    }
+
+    fun testRscmFollowsImmutableLocalReferences() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                fun load(@Rscm("item") reference: String) = reference
+
+                fun execute() {
+                    val label = "npc.hans"
+                    load(label)
+                }
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected an RSCM reference of type 'item', but found: npc.hans" },
+        )
+    }
+
+    fun testNotRscmFollowsImmutableLocalReferences() {
+        val errors =
+            errors(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                fun label(@NotRscm text: String) = text
+
+                fun execute() {
+                    val reference = "item.abyssal_whip"
+                    label(reference)
+                }
+                """.trimIndent(),
+            )
+
+        assertTrue(
+            "Errors: $errors",
+            errors.any { it == "Expected a non-RSCM string, but found RSCM reference: item.abyssal_whip" },
         )
     }
 

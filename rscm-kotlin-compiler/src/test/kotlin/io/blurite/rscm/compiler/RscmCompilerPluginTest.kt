@@ -240,10 +240,176 @@ class RscmCompilerPluginTest {
         assertEquals(ExitCode.OK, result.exitCode, result.output)
     }
 
+    @Test
+    fun `Rscm follows immutable local literal references`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                fun load(@Rscm("item") reference: String) = reference
+
+                fun execute() {
+                    val first = "npc.rune_dragon"
+                    val second = first
+                    load(second)
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.output, "expected an RSCM reference of type 'item', but found: npc.rune_dragon")
+    }
+
+    @Test
+    fun `Rscm constrains annotated parameter types`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                fun load(reference: @Rscm("item") String) = reference
+
+                val result = load("npc.rune_dragon")
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.output, "expected an RSCM reference of type 'item', but found: npc.rune_dragon")
+    }
+
+    @Test
+    fun `Rscm constrains generic collection elements`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                val references: List<@Rscm("item") String> =
+                    listOf("item.abyssal_whip", "npc.rune_dragon")
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.output, "expected an RSCM reference of type 'item', but found: npc.rune_dragon")
+    }
+
+    @Test
+    fun `Rscm accepts valid nested generic collection elements`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                val references: List<List<@Rscm("item") String>> =
+                    listOf(listOf("item.abyssal_whip"))
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.OK, result.exitCode, result.output)
+    }
+
+    @Test
+    fun `Rscm constrains generic collection parameters`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.Rscm
+
+                fun load(references: List<@Rscm("item") String>) = references
+
+                val result = load(listOf("npc.rune_dragon"))
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.output, "expected an RSCM reference of type 'item', but found: npc.rune_dragon")
+    }
+
+    @Test
+    fun `NotRscm rejects RSCM method arguments`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                fun show(label: @NotRscm String) = label
+
+                val result = show("item.abyssal_whip")
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(
+            result.output,
+            "expected a non-RSCM string, but found RSCM reference: item.abyssal_whip",
+        )
+    }
+
+    @Test
+    fun `NotRscm follows immutable local literal references`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                fun show(@NotRscm label: String) = label
+
+                fun execute() {
+                    val label = "npc.rune_dragon"
+                    show(label)
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(
+            result.output,
+            "expected a non-RSCM string, but found RSCM reference: npc.rune_dragon",
+        )
+    }
+
+    @Test
+    fun `NotRscm constrains generic collection elements`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                val labels: List<@NotRscm String> =
+                    listOf("ordinary label", "item.abyssal_whip")
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(
+            result.output,
+            "expected a non-RSCM string, but found RSCM reference: item.abyssal_whip",
+        )
+    }
+
+    @Test
+    fun `NotRscm accepts ordinary and unknown-prefix strings`() {
+        val result =
+            compile(
+                """
+                import io.blurite.rscm.annotations.NotRscm
+
+                fun show(@NotRscm label: String) = label
+
+                val plain = show("Rune dragon")
+                val dotted = show("external.value")
+                """.trimIndent(),
+            )
+
+        assertEquals(ExitCode.OK, result.exitCode, result.output)
+    }
+
     private fun compile(sourceText: String): CompilationResult {
         val mappingsDirectory = directory.resolve("mappings").createDirectories()
         mappingsDirectory.resolve("item.rscm").writeText("abyssal_whip=4151\n")
         mappingsDirectory.resolve("varbit.rscm").writeText("run_energy=173\n")
+        mappingsDirectory.resolve("npc.rscm").writeText("hans=0\nrune_dragon=1\n")
 
         val source = directory.resolve("Example.kt")
         source.writeText(sourceText)

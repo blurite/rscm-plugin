@@ -122,10 +122,15 @@ The bundled Gradle loader adds the annotations automatically.
 Kotlin:
 
 ```kotlin
+import io.blurite.rscm.annotations.NotRscm
 import io.blurite.rscm.annotations.Rscm
 import io.blurite.rscm.annotations.RscmIgnore
 
 fun load(@Rscm("item") reference: String) = reference
+
+fun label(@NotRscm text: String) = text
+
+val items: List<@Rscm("item") String> = listOf("item.abyssal_whip")
 
 @RscmIgnore
 val externallyValidated = "item.not_in_the_mapping"
@@ -134,6 +139,7 @@ val externallyValidated = "item.not_in_the_mapping"
 Java:
 
 ```java
+import io.blurite.rscm.annotations.NotRscm;
 import io.blurite.rscm.annotations.Rscm;
 import io.blurite.rscm.annotations.RscmIgnore;
 
@@ -142,12 +148,16 @@ final class Loader {
         return reference;
     }
 
+    static String label(@NotRscm String text) {
+        return text;
+    }
+
     @RscmIgnore
     String externallyValidated = "item.not_in_the_mapping";
 }
 ```
 
-`@Rscm("item")` requires direct literals to use the `item` mapping. `@RscmIgnore` disables validation for that field, property, local variable, or parameter.
+`@Rscm("item")` requires statically known strings to use the `item` mapping. `@NotRscm` rejects RSCM references. `@RscmIgnore` disables validation. Kotlin also follows immutable local values and validates annotated generic elements created with standard collection factories.
 
 ## Advanced mappings
 

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirCallChecker
 import org.jetbrains.kotlin.fir.expressions.FirCall
 import org.jetbrains.kotlin.fir.expressions.resolvedArgumentMapping
+import org.jetbrains.kotlin.fir.types.coneType
 
 class RscmCallChecker(
     private val mappingIndex: RscmMappingIndex,
@@ -15,14 +16,31 @@ class RscmCallChecker(
     override fun check(expression: FirCall) {
         val arguments = expression.resolvedArgumentMapping ?: return
         for ((argument, parameter) in arguments) {
-            when (val directive = parameter.rscmDirective(context.session)) {
-                null, RscmDirective.Ignore -> continue
+            val directive = parameter.rscmDirective(context.session)
+            when (directive) {
+                null ->
+                    validateRscmTypedExpression(
+                        argument,
+                        parameter.returnTypeRef.coneType,
+                        mappingIndex,
+                    )
+                RscmDirective.Ignore -> continue
+                RscmDirective.Reject -> {
+                    for (knownString in argument.compileTimeStrings()) {
+                        validateNotRscmLiteral(
+                            expression = knownString.expression,
+                            literal = knownString.value,
+                            mappingIndex = mappingIndex,
+                            context = context,
+                            reporter = reporter,
+                        )
+                    }
+                }
                 is RscmDirective.RequireType -> {
-                    for (literalExpression in argument.directStringLiterals()) {
-                        val literal = literalExpression.value as? String ?: continue
+                    for (knownString in argument.compileTimeStrings()) {
                         validateRscmLiteral(
-                            expression = literalExpression,
-                            literal = literal,
+                            expression = knownString.expression,
+                            literal = knownString.value,
                             requiredType = directive.type,
                             mappingIndex = mappingIndex,
                             context = context,

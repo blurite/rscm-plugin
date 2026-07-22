@@ -189,6 +189,54 @@ class RscmJavaGradlePluginTest {
         assertContains(result.output, "Expected an RSCM reference of type 'item', but found: npc.hans")
     }
 
+    @Test
+    fun `NotRscm rejects Java RSCM method arguments`() {
+        createProject(
+            source =
+                """
+                import io.blurite.rscm.annotations.NotRscm;
+
+                public class Example {
+                    static String label(@NotRscm String text) {
+                        return text;
+                    }
+
+                    private final String result = label("item.abyssal_whip");
+                }
+                """.trimIndent(),
+        )
+
+        val result = runner().buildAndFail()
+
+        assertEquals(TaskOutcome.FAILED, result.task(":compileJava")?.outcome)
+        assertContains(
+            result.output,
+            "Expected a non-RSCM string, but found RSCM reference: item.abyssal_whip",
+        )
+    }
+
+    @Test
+    fun `NotRscm accepts ordinary Java strings`() {
+        createProject(
+            source =
+                """
+                import io.blurite.rscm.annotations.NotRscm;
+
+                public class Example {
+                    static String label(@NotRscm String text) {
+                        return text;
+                    }
+
+                    private final String result = label("Rune dragon");
+                }
+                """.trimIndent(),
+        )
+
+        val result = runner().build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":compileJava")?.outcome)
+    }
+
     private fun createProject(source: String) {
         writeSettings()
         projectDirectory.resolve("build.gradle.kts").writeText(

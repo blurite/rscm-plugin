@@ -19,6 +19,8 @@ import com.intellij.psi.PsiVariable
 
 internal sealed interface RscmJavaDirective {
     data object Ignore : RscmJavaDirective
+    data object Reject : RscmJavaDirective
+
 
     data class RequireType(
         val type: String,
@@ -28,6 +30,7 @@ internal sealed interface RscmJavaDirective {
 internal object RscmJavaAnnotationSupport {
     private const val RSCM_ANNOTATION = "io.blurite.rscm.annotations.Rscm"
     private const val RSCM_IGNORE_ANNOTATION = "io.blurite.rscm.annotations.RscmIgnore"
+    private const val NOT_RSCM_ANNOTATION = "io.blurite.rscm.annotations.NotRscm"
 
     fun directiveFor(expression: PsiLiteralExpression): RscmJavaDirective? {
         if (DumbService.isDumb(expression.project) || expression.hasParentOfType<PsiAnnotation>()) {
@@ -99,12 +102,19 @@ internal object RscmJavaAnnotationSupport {
     }
 
     private fun PsiModifierListOwner.rscmDirective(): RscmJavaDirective? {
-        val modifierList = modifierList ?: return null
-        if (modifierList.findAnnotation(RSCM_IGNORE_ANNOTATION) != null) {
+        val typeAnnotations = (this as? PsiVariable)?.type?.annotations.orEmpty()
+        fun findAnnotation(qualifiedName: String): PsiAnnotation? =
+            modifierList?.findAnnotation(qualifiedName)
+                ?: typeAnnotations.firstOrNull { it.qualifiedName == qualifiedName }
+
+        if (findAnnotation(RSCM_IGNORE_ANNOTATION) != null) {
             return RscmJavaDirective.Ignore
         }
+        if (findAnnotation(NOT_RSCM_ANNOTATION) != null) {
+            return RscmJavaDirective.Reject
+        }
 
-        val annotation = modifierList.findAnnotation(RSCM_ANNOTATION) ?: return null
+        val annotation = findAnnotation(RSCM_ANNOTATION) ?: return null
         val value = annotation.stringAttribute("value")
         val type = annotation.stringAttribute("type")
         return RscmJavaDirective.RequireType(value?.takeIf(String::isNotEmpty) ?: type.orEmpty())

@@ -18,12 +18,22 @@ class RscmVariableAssignmentChecker(
         val property = expression.calleeReference?.toResolvedVariableSymbol() as? FirPropertySymbol ?: return
         when (val directive = property.rscmDirective(context.session)) {
             null, RscmDirective.Ignore -> return
+            RscmDirective.Reject -> {
+                for (knownString in expression.rValue.compileTimeStrings()) {
+                    validateNotRscmLiteral(
+                        expression = knownString.expression,
+                        literal = knownString.value,
+                        mappingIndex = mappingIndex,
+                        context = context,
+                        reporter = reporter,
+                    )
+                }
+            }
             is RscmDirective.RequireType -> {
-                for (literalExpression in expression.rValue.directStringLiterals()) {
-                    val literal = literalExpression.value as? String ?: continue
+                for (knownString in expression.rValue.compileTimeStrings()) {
                     validateRscmLiteral(
-                        expression = literalExpression,
-                        literal = literal,
+                        expression = knownString.expression,
+                        literal = knownString.value,
                         requiredType = directive.type,
                         mappingIndex = mappingIndex,
                         context = context,

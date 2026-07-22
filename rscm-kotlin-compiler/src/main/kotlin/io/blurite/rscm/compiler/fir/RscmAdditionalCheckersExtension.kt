@@ -2,6 +2,7 @@ package io.blurite.rscm.compiler.fir
 
 import io.blurite.rscm.core.RscmMappingIndex
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtension
 
@@ -9,6 +10,12 @@ class RscmAdditionalCheckersExtension(
     session: FirSession,
     mappingIndex: RscmMappingIndex,
 ) : FirAdditionalCheckersExtension(session) {
+    override val declarationCheckers: DeclarationCheckers =
+        object : DeclarationCheckers() {
+            override val propertyCheckers =
+                setOf(RscmPropertyTypeChecker(mappingIndex))
+        }
+
     override val expressionCheckers: ExpressionCheckers =
         object : ExpressionCheckers() {
             override val callCheckers = setOf(RscmCallChecker(mappingIndex))
